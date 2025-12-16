@@ -33,21 +33,23 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const organization = await prisma.organization.create({
-      data: { name: orgName },
-    });
+    await prisma.$transaction(async (tx) => {
+      const organization = await tx.organization.create({
+        data: { name: orgName },
+      });
 
-    await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        memberships: {
-          create: {
-            orgId: organization.id,
-            role: Role.ADMIN,
+      await tx.user.create({
+        data: {
+          email,
+          passwordHash,
+          memberships: {
+            create: {
+              orgId: organization.id,
+              role: Role.ADMIN,
+            },
           },
         },
-      },
+      });
     });
 
     return NextResponse.json({ message: "Conta criada com sucesso." }, { status: 201 });
