@@ -26,6 +26,16 @@ Aplicação para gerar atividades em Alfabeto Fonético Internacional (AFI/IPA) 
 - As rotas `/dashboard` e `/capture` são protegidas via middleware e redirecionam
   usuários não autenticados para `/login`.
 
+## Segurança
+- Limites simples em memória para desenvolvimento: `/api/auth/login`,
+  `/api/auth/register` e `/api/plans/generate` usam a política definida em
+  `src/lib/rate-limit.ts`.
+- Para produção, configure um limitador com Redis (ex.: Upstash): crie um cliente
+  Redis usando `REDIS_URL` e replique a lógica de `applyRateLimit` para
+  compartilhar contadores entre instâncias antes de responder 429.
+- Uploads de áudio aceitam apenas `audio/webm`, `audio/wav` ou `audio/mpeg`, com
+  limite de 10MB validado no cliente e no backend.
+
 ## Regra "Não quebre o repositório"
 - Faça commits pequenos e incrementais.
 - Após cada etapa, execute lint e build para garantir integridade.
