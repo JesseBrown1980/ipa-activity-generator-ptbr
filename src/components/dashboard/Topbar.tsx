@@ -1,10 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { dashboardNavigation } from "./Sidebar";
 
 type TopbarProps = {
   userEmail?: string;
@@ -12,6 +14,15 @@ type TopbarProps = {
 
 export function Topbar({ userEmail }: TopbarProps) {
   const [isPending, startTransition] = useTransition();
+  const pathname = usePathname();
+
+  const currentSection = useMemo(
+    () =>
+      dashboardNavigation.find(
+        (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
+      ),
+    [pathname]
+  );
 
   const handleSignOut = () => {
     startTransition(async () => {
@@ -23,9 +34,11 @@ export function Topbar({ userEmail }: TopbarProps) {
     <header className="flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur">
       <div className="space-y-0.5">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          Navegação
+          Seção atual
         </p>
-        <p className="text-base font-semibold">Painel</p>
+        <p className="text-base font-semibold">
+          {currentSection?.label ?? "Painel"}
+        </p>
       </div>
       <div className="flex items-center gap-4">
         {userEmail ? (

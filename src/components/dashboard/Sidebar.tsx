@@ -12,7 +12,7 @@ import {
 
 import { cn } from "@/lib/utils";
 
-const navItems = [
+export const dashboardNavigation = [
   { href: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
   { href: "/dashboard/plans", label: "Planos", icon: GraduationCap },
   { href: "/dashboard/students", label: "Estudantes", icon: Users },
@@ -24,13 +24,23 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden border-r bg-muted/30 md:flex md:w-64 md:flex-col">
-      <div className="flex h-16 items-center px-6 text-lg font-semibold">
-        Painel IPA
+    <aside className="hidden border-r bg-background/80 md:flex md:w-64 md:flex-col">
+      <div className="flex h-16 items-center border-b px-6">
+        <div>
+          <p className="text-sm font-semibold leading-tight">Painel IPA</p>
+          <p className="text-xs text-muted-foreground">Acompanhamento rápido</p>
+        </div>
       </div>
-      <nav className="flex-1 px-3 pb-6">
+
+      <nav
+        className="flex-1 space-y-4 px-3 py-6"
+        aria-label="Navegação do painel"
+      >
+        <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Menu principal
+        </p>
         <ul className="space-y-1">
-          {navItems.map((item) => {
+          {dashboardNavigation.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -52,6 +62,10 @@ export function Sidebar() {
           })}
         </ul>
       </nav>
+
+      <div className="px-6 pb-6 text-xs text-muted-foreground">
+        Sessões, estudantes e materiais organizados em um só lugar.
+      </div>
     </aside>
   );
 }
