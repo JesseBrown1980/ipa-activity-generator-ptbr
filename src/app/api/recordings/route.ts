@@ -3,10 +3,11 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { ALLOWED_AUDIO_MIME_TYPES } from "@/lib/upload-validation";
 
 const recordingCreateSchema = z.object({
   storageKey: z.string().min(1),
-  mimeType: z.string().min(1),
+  mimeType: z.enum(ALLOWED_AUDIO_MIME_TYPES),
   studentId: z.string().min(1),
   durationMs: z.number().int().positive().optional(),
 });

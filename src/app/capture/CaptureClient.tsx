@@ -16,6 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  MAX_AUDIO_FILE_BYTES,
+  formatAllowedMimeTypes,
+  isAllowedAudioMimeType,
+} from "@/lib/upload-validation";
 
 type ConsentInfo = {
   audioAllowed: boolean;
@@ -34,6 +39,8 @@ type CaptureClientProps = {
 };
 
 type RecordingState = "idle" | "recording" | "uploading";
+
+const MAX_AUDIO_SIZE_MB = Math.round(MAX_AUDIO_FILE_BYTES / (1024 * 1024));
 
 type ConsentMap = Record<string, ConsentInfo | null>;
 
@@ -243,11 +250,31 @@ export default function CaptureClient({ initialStudents }: CaptureClientProps) {
     }
 
     const mimeType = blob.type || "audio/webm";
+
+    if (!isAllowedAudioMimeType(mimeType)) {
+      toast.error(
+        `Formato de áudio não permitido. Use apenas: ${formatAllowedMimeTypes()}.`
+      );
+      setRecordingState("idle");
+      return;
+    }
+
+    if (blob.size > MAX_AUDIO_FILE_BYTES) {
+      toast.error(
+        `Arquivo muito grande. Limite máximo: ${MAX_AUDIO_SIZE_MB}MB.`
+      );
+      setRecordingState("idle");
+      return;
+    }
     try {
       const signResponse = await fetch("/api/storage/sign-upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mimeType, studentId: selectedStudent.id }),
+        body: JSON.stringify({
+          mimeType,
+          studentId: selectedStudent.id,
+          sizeBytes: blob.size,
+        }),
       });
 
       if (!signResponse.ok) {

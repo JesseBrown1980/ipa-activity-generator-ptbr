@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { z } from "zod";
 
 import prisma from "@/lib/db";
+import { applyRateLimit, rateLimitPolicies } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   email: z.string().email({ message: "E-mail inválido." }),
@@ -17,7 +18,12 @@ const registerSchema = z.object({
     .max(120, { message: "Nome da organização muito longo." }),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, rateLimitPolicies.register);
+  if (limited) {
+    return limited;
+  }
+
   try {
     const body = await request.json();
     const { email, password, orgName } = registerSchema.parse(body);
