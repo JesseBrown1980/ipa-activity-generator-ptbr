@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
+import prisma from "@/lib/db";
 import { getStorageProvider } from "@/lib/storage";
 
 const downloadSchema = z.object({
@@ -27,6 +28,18 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Chave não pertence à organização." },
         { status: 403 }
+      );
+    }
+
+    const recording = await prisma.recording.findFirst({
+      where: { orgId: session.user.orgId, storageKey: data.key },
+      select: { id: true },
+    });
+
+    if (!recording) {
+      return NextResponse.json(
+        { error: "Gravação não encontrada para esta organização." },
+        { status: 404 }
       );
     }
 
