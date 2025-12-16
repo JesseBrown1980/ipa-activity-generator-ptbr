@@ -9,7 +9,13 @@ Aplicação para gerar atividades em Alfabeto Fonético Internacional (AFI/IPA) 
 2. Configure as variáveis de ambiente necessárias.
 3. Execute as migrações do Prisma: `npx prisma migrate dev`.
 4. Rode a aplicação em modo dev: `npm run dev`.
-5. Após mudanças, valide com `npm run lint` e `npm run build`.
+5. Após mudanças, valide com `npm run lint`, `npm run test` (Vitest)
+   e `npm run build`.
+
+### Testes
+- Unitários: `npm run test` (Vitest, inclui validação de esquemas e helpers)
+- E2E opcional: `npm run test:e2e` (Playwright, habilite com `E2E_RUN=true` e
+  um backend disponível)
 
 ## Variáveis de ambiente (placeholders)
 - `OPENAI_API_KEY`: chave para a Responses API.
