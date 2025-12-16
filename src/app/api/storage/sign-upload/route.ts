@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -8,8 +7,8 @@ import { getStorageProvider } from "@/lib/storage";
 import {
   ALLOWED_AUDIO_MIME_TYPES,
   MAX_AUDIO_FILE_BYTES,
-  extensionFromMimeType,
 } from "@/lib/upload-validation";
+import { generateRecordingStorageKey } from "@/lib/storage/key";
 
 const uploadSchema = z.object({
   mimeType: z.enum(ALLOWED_AUDIO_MIME_TYPES),
@@ -22,18 +21,6 @@ const uploadSchema = z.object({
       message: "Arquivo de áudio excede o limite permitido.",
     }),
 });
-
-function buildObjectKey(
-  orgId: string,
-  studentId: string,
-  mimeType: (typeof ALLOWED_AUDIO_MIME_TYPES)[number]
-) {
-  const timestamp = Date.now();
-  const uniqueId = randomUUID().replace(/-/g, "");
-  const extension = extensionFromMimeType(mimeType);
-
-  return `org/${orgId}/students/${studentId}/recordings/${timestamp}_${uniqueId}.${extension}`;
-}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -58,7 +45,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const key = buildObjectKey(session.user.orgId, data.studentId, data.mimeType);
+    const key = generateRecordingStorageKey({
+      orgId: session.user.orgId,
+      studentId: data.studentId,
+      mimeType: data.mimeType,
+    });
     const storage = getStorageProvider();
     const upload = await storage.getSignedUploadUrl({
       key,
