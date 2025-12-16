@@ -69,6 +69,14 @@ export function applyRateLimit(
 }
 
 /**
+ * Limpa o estado em memória, útil para testes que precisam de isolamento
+ * entre cenários sem carregar o histórico de requisições anteriores.
+ */
+export function resetRateLimitStore() {
+  memoryStore.clear();
+}
+
+/**
  * Para produção, habilite um limitador persistente baseado em Redis (ex.: Upstash)
  * sincronizando os contadores entre instâncias. O comportamento pode ser adaptado
  * usando o mesmo contrato de função acima, retornando uma resposta 429 quando o
