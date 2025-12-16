@@ -1,0 +1,103 @@
+// Prisma schema for IPA Activity Generator
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+}
+
+model Organization {
+  id        String        @id @default(cuid())
+  name      String
+  createdAt DateTime      @default(now())
+  users     Membership[]
+  students  Student[]
+  plans     Plan[]
+  recordings Recording[]
+}
+
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  passwordHash String
+  createdAt   DateTime      @default(now())
+  memberships Membership[]
+  plans       Plan[]        @relation("PlanAuthor")
+  recordings  Recording[]   @relation("RecordingAuthor")
+  consents    Consent[]     @relation("ConsentSigner")
+}
+
+model Membership {
+  id        String     @id @default(cuid())
+  orgId     String
+  userId    String
+  role      Role
+  createdAt DateTime   @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+model Student {
+  id          String        @id @default(cuid())
+  orgId       String
+  code        String
+  displayName String?
+  notes       String?
+  createdAt   DateTime      @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  consents     Consent[]
+  recordings   Recording[]
+
+  @@unique([orgId, code])
+}
+
+model Consent {
+  id                  String   @id @default(cuid())
+  studentId           String
+  audioAllowed        Boolean
+  shareForResearch    Boolean
+  signedAt            DateTime
+  signedByUserId      String
+
+  student  Student @relation(fields: [studentId], references: [id])
+  signedBy User    @relation("ConsentSigner", fields: [signedByUserId], references: [id])
+}
+
+model Plan {
+  id              String   @id @default(cuid())
+  orgId           String
+  createdByUserId String
+  targetIpa       String
+  ageOrGrade      String
+  needsJson       Json
+  planJson        Json
+  createdAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  createdBy    User         @relation("PlanAuthor", fields: [createdByUserId], references: [id])
+}
+
+model Recording {
+  id              String   @id @default(cuid())
+  orgId           String
+  studentId       String
+  createdByUserId String
+  storageKey      String
+  mimeType        String
+  durationMs      Int?
+  createdAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  student      Student      @relation(fields: [studentId], references: [id])
+  createdBy    User         @relation("RecordingAuthor", fields: [createdByUserId], references: [id])
+}
