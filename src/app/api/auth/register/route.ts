@@ -19,7 +19,7 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const limited = applyRateLimit(request, rateLimitPolicies.register);
+  const limited = await applyRateLimit(request, rateLimitPolicies.register);
   if (limited) {
     return limited;
   }
