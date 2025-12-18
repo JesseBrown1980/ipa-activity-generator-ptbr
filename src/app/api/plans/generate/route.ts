@@ -123,8 +123,8 @@ export async function POST(request: NextRequest) {
       data: {
         orgId: session.user.orgId,
         createdByUserId: session.user.id,
-        targetIpa: validatedPlan.data.targetIpa,
-        ageOrGrade: validatedPlan.data.ageOrGrade,
+        targetIpa: parsedInput.data.targetIpa,
+        ageOrGrade: parsedInput.data.ageOrGrade,
         needsJson: {
           accessibilityNeeds: parsedInput.data.accessibilityNeeds,
           objectives: parsedInput.data.objectives,
