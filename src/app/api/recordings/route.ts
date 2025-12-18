@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { Role } from "@prisma/client";
+
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { requireRole } from "@/lib/rbac";
 import { ALLOWED_AUDIO_MIME_TYPES } from "@/lib/upload-validation";
 
 const recordingCreateSchema = z.object({
@@ -23,6 +26,13 @@ export async function GET(request: Request) {
 
   if (!session?.user?.id || !session.user.orgId) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  try {
+    requireRole(session, [Role.ADMIN, Role.TEACHER]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Acesso negado.";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   const url = new URL(request.url);
@@ -84,6 +94,13 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id || !session.user.orgId) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  try {
+    requireRole(session, [Role.ADMIN, Role.TEACHER]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Acesso negado.";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   try {
