@@ -17,12 +17,25 @@ Aplicação para gerar atividades em Alfabeto Fonético Internacional (AFI/IPA) 
 - E2E opcional: `npm run test:e2e` (Playwright, habilite com `E2E_RUN=true` e
   um backend disponível)
 
-## Variáveis de ambiente (placeholders)
-- `OPENAI_API_KEY`: chave para a Responses API.
-- `NEXT_PUBLIC_APP_URL`: URL base da aplicação.
-- `AUDIO_CAPTURE_ENABLED`: `true`/`false` para habilitar captura de áudio opcional.
-- `DATABASE_URL`: conexão para armazenamento de dados.
-- `AUTH_SECRET`: segredo usado pelo NextAuth para assinar tokens.
+## Variáveis de ambiente
+
+As principais chaves para executar o projeto localmente ou em produção estão
+detalhadas abaixo. Use `.env.local.example` como base e ajuste conforme o
+ambiente:
+
+| Variável | Descrição | Padrão/observação |
+| --- | --- | --- |
+| `NEXT_PUBLIC_APP_URL` | URL base da aplicação, usada para links absolutos. | `http://localhost:3000` |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | Credenciais para a Responses API. | Vazios por padrão. |
+| `DATABASE_URL` | Conexão do banco (PostgreSQL). | Obrigatória para iniciar o app. |
+| `AUTH_SECRET` | Segredo usado pelo NextAuth para assinar tokens. | Obrigatório. |
+| `AUDIO_CAPTURE_ENABLED` | `true`/`false` para habilitar a captura opcional de áudio. | `true` |
+| `STORAGE_DRIVER` | `s3` (produção) ou `local` (apenas desenvolvimento). | `s3` |
+| `S3_REGION` / `S3_BUCKET` / `S3_ENDPOINT` | Configurações de bucket para o driver S3. | Necessárias quando `STORAGE_DRIVER=s3`. |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Credenciais do bucket S3 (ou `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). | Necessárias quando `STORAGE_DRIVER=s3`. |
+| `LOCAL_STORAGE_BASE_URL` | URL de download/upload assinada para o driver local. | `http://localhost:3000/storage` |
+| `REDIS_URL` | URL do Redis para rate limiting compartilhado. | Opcional; usa memória se ausente. |
+| `E2E_RUN` / `E2E_BASE_URL` | Flags auxiliares para Playwright E2E. | Comentadas por padrão. |
 
 ## Fluxo de autenticação
 - Login e sessão são gerenciados pelo NextAuth com adaptador Prisma e JWT.
