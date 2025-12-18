@@ -35,13 +35,29 @@ export async function POST(request: Request) {
 
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, orgId: session.user.orgId },
-      select: { id: true },
+      select: {
+        id: true,
+        consents: {
+          orderBy: { signedAt: "desc" },
+          take: 1,
+          select: { audioAllowed: true },
+        },
+      },
     });
 
     if (!student) {
       return NextResponse.json(
         { error: "Estudante não encontrado." },
         { status: 404 }
+      );
+    }
+
+    const latestConsent = student.consents[0];
+
+    if (!latestConsent?.audioAllowed) {
+      return NextResponse.json(
+        { error: "Consentimento de áudio não encontrado ou negado." },
+        { status: 403 }
       );
     }
 
