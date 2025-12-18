@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
+import prisma from "@/lib/db";
 import { applyRateLimit, rateLimitPolicies } from "@/lib/rate-limit";
 import { requireRole } from "@/lib/rbac";
 import { ActivityPlanSchema } from "@/lib/schemas/activity-plan";
@@ -118,7 +119,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(validatedPlan.data, { status: 200 });
+    const savedPlan = await prisma.plan.create({
+      data: {
+        orgId: session.user.orgId,
+        createdByUserId: session.user.id,
+        targetIpa: validatedPlan.data.targetIpa,
+        ageOrGrade: validatedPlan.data.ageOrGrade,
+        needsJson: {
+          accessibilityNeeds: parsedInput.data.accessibilityNeeds,
+          objectives: parsedInput.data.objectives,
+        },
+        planJson: validatedPlan.data,
+      },
+    });
+
+    return NextResponse.json(savedPlan, { status: 200 });
   } catch (error) {
     console.error("Erro ao gerar plano com OpenAI", error);
     const message = error instanceof Error ? error.message : "Erro desconhecido.";
