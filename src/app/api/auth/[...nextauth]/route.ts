@@ -4,7 +4,7 @@ import { handlers } from "@/lib/auth";
 import { applyRateLimit, rateLimitPolicies } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
-  const limited = applyRateLimit(request, rateLimitPolicies.login);
+  const limited = await applyRateLimit(request, rateLimitPolicies.login);
   if (limited) {
     return limited;
   }

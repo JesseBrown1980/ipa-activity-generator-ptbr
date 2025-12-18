@@ -7,7 +7,7 @@ import { applyRateLimit, rateLimitPolicies } from "@/lib/rate-limit";
 import { requireRole } from "@/lib/rbac";
 
 export async function POST(request: NextRequest) {
-  const limited = applyRateLimit(request, rateLimitPolicies.planGeneration);
+  const limited = await applyRateLimit(request, rateLimitPolicies.planGeneration);
   if (limited) {
     return limited;
   }
