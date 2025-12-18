@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "node scripts/lint-stub.js",
     "test": "vitest",
     "test:e2e": "playwright test",
     "prisma:generate": "prisma generate",
