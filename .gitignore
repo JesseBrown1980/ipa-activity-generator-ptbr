@@ -17,6 +17,9 @@
 .DS_Store
 *.pem
 
+# temp directories
+/.tmp
+
 # local env files
 .env.local
 .env.development.local
