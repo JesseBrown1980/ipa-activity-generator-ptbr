@@ -1,44 +1,52 @@
 # NEXT STEP PROMPTS
 
-Use estes prompts pequenos no GitHub Copilot/Codex para avançar com segurança.
+Use estes prompts específicos no GitHub Copilot/Codex para evoluir com segurança.
 
-1. **Desbloquear instalação npm 403**
+1. **Bloquear uploads sem consentimento**
 ```
-Revise .npmrc e variáveis de proxy para garantir acesso ao registry npmjs.org; reproduza `npm install` e registre o pacote que falha (@auth/prisma-adapter). Adicione logs e, se preciso, force `npm config delete proxy`/`https-proxy` no script de CI local (não commitar segredos).
+No arquivo src/app/api/storage/sign-upload/route.ts, antes de gerar a URL, carregue o último consentimento do estudante (orgId + studentId) e retorne 403 se audioAllowed for falso ou inexistente. Reaproveite zod existente.
 ```
-2. **Corrigir DATABASE_URL vs provider**
+2. **Enforçar RBAC em estudantes/gravações**
 ```
-Abra prisma/schema.prisma e alinhe `datasource db` ao banco real: usar Postgres local (compose) ou trocar provider para sqlite se o objetivo for arquivo .tmp/dev.db. Atualize .env.local.example com valor compatível e descreva no README.
+Aplique requireRole no topo das rotas /api/students*, /api/recordings e /api/storage/sign-* permitindo apenas ADMIN para criar/alterar e TEACHER apenas leitura/listagem. Retorne 403 com mensagem em PT-BR.
 ```
-3. **Aplicar consentimento no backend de gravação**
+3. **Endurecer driver local de storage**
 ```
-Em /api/storage/sign-upload e /api/recordings, antes de criar URL ou registro, carregue o último consentimento do estudante e recuse se audioAllowed for falso ou ausente. Retorne 403 com mensagem clara.
+Em src/lib/storage/index.ts, ajuste createLocalProvider para gerar URLs temporárias com token/HMAC + expiração (ex.: query `expires`, `signature`) e rejeitar quando inválidas. Mantenha driver só quando STORAGE_DRIVER=local.
 ```
-4. **Criar endpoint de registro de consentimento**
+4. **Registrar consentimento no backend**
 ```
-Adicione POST/PATCH em /api/students/[id]/consent para salvar Consent com audioAllowed/shareForResearch/signedAt/signedByUserId. Valide com Zod e restrinja a membros da org.
+Implemente POST/PATCH em src/app/api/students/[id]/consent/route.ts que cria ou substitui Consent com audioAllowed/shareForResearch/signedAt/signedByUserId (do session.user.id). Valide com Zod e restrinja à org.
 ```
-5. **Enforçar RBAC nas rotas protegidas**
+5. **Persistir rate limit**
 ```
-Use requireRole em /api/students*, /api/recordings e geração de planos para limitar operações de cadastro a ADMIN; TEACHER apenas leitura. Retorne 403 quando papel não autorizado.
+Crie um provider de rate limit baseado em Redis (ex.: Upstash) que implemente o mesmo contrato de applyRateLimit, com TTL e cabeçalhos Retry-After. Faça fallback para memória somente em dev.
 ```
-6. **Endurecer driver de armazenamento local**
+6. **Wire da geração de planos com OpenAI**
 ```
-No lib/storage/index.ts, adicione assinatura temporária (token/HMAC com expiração) às URLs do driver local, evitando acesso público. Documente que só é para desenvolvimento.
+No endpoint /api/plans/generate, valide entrada com ActivityPlanSchema, chame o cliente OpenAI Responses API server-side (key via env) para obter um plano estruturado, e retorne JSON seguindo o schema. Sem dados sensíveis no cliente.
 ```
-7. **Implementar geração de planos via OpenAI Responses API**
+7. **Persistir planos gerados**
 ```
-No endpoint /api/plans/generate, valide entrada (targetIpa, idade, necessidades) com o schema ActivityPlan, chame o cliente OpenAI no servidor usando model configurável e retorne JSON estruturado. Mantenha a chave apenas server-side.
+Após gerar o plano, salve em prisma.plan com orgId e createdByUserId do token, armazenando needsJson/planJson. Exponha GET /api/plans para listar apenas da org.
 ```
-8. **Validar uploads no backend**
+8. **Checar tamanho/MIME no backend**
 ```
-Em sign-upload e sign-download, revalide tamanho/tipo do arquivo (MAX_AUDIO_FILE_BYTES, ALLOWED_AUDIO_MIME_TYPES) e negue chaves que não pertençam à org. Adicione logs de auditoria mínimos.
+Adicione validação de size/mime em /api/storage/sign-upload e /api/recordings usando MAX_AUDIO_FILE_BYTES e ALLOWED_AUDIO_MIME_TYPES antes de salvar. Retorne 400/415 conforme o caso.
 ```
-9. **Gating opcional para E2E**
+9. **Gating de E2E no CI**
 ```
-Atualize package.json e CI para rodar `npm run test:e2e` somente quando E2E_RUN=true, mantendo playwright.config.ts intacto.
+Atualize package.json e .github/workflows/ci.yml para só rodar npm run test:e2e quando E2E_RUN=true, mantendo vitest e lint sempre ativos.
 ```
-10. **Cobertura de testes para consentimento/RBAC**
+10. **Testes de consentimento e RBAC**
 ```
-Adicione testes Vitest cobrindo requireRole (roles permitidos/negados) e novos endpoints de consentimento, mockando Prisma e auth(). Garanta reset do rate limit nos testes.
+Crie testes Vitest em src/lib/rbac.test.ts e novos testes para /api/students/[id]/consent que mockam Prisma e auth(), cobrindo cenários de roles não autorizadas e falta de consentimento no upload.
+```
+11. **Proteção de download de áudio**
+```
+Em /api/storage/sign-download, adicione verificação de que o storageKey pertence ao estudante/org e valide assinatura/expiração do driver local antes de devolver a URL.
+```
+12. **Reforçar constraints Prisma**
+```
+Atualize prisma/schema.prisma com @@unique em Membership (orgId, userId) e considere onDelete=CASCADE/RESTRICT para Consent/Recording. Rode prisma migrate dev e atualize seed.
 ```
