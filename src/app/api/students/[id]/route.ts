@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { Role } from "@prisma/client";
+
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { requireRole } from "@/lib/rbac";
 
 const studentUpdateSchema = z.object({
   displayName: z.string().max(120).optional(),
@@ -17,6 +20,13 @@ export async function GET(
 
   if (!session?.user?.id || !session.user.orgId) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  try {
+    requireRole(session, [Role.ADMIN, Role.TEACHER]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Acesso negado.";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   const student = await prisma.student.findFirst({
@@ -38,6 +48,13 @@ export async function PATCH(
 
   if (!session?.user?.id || !session.user.orgId) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  try {
+    requireRole(session, [Role.ADMIN]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Acesso negado.";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   try {
@@ -87,6 +104,13 @@ export async function DELETE(
 
   if (!session?.user?.id || !session.user.orgId) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  try {
+    requireRole(session, [Role.ADMIN]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Acesso negado.";
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   const student = await prisma.student.findFirst({
