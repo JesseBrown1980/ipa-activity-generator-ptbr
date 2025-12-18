@@ -1,5 +1,10 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {
+  LOCAL_URL_EXPIRATION_SECONDS,
+  generateLocalSignature,
+  getLocalStorageSecret,
+} from "./local-signature";
 
 export interface GetSignedUploadUrlParams {
   key: string;
@@ -81,19 +86,25 @@ function createS3Provider(): StorageProvider {
 function createLocalProvider(): StorageProvider {
   const baseUrl =
     process.env.LOCAL_STORAGE_BASE_URL ?? "http://localhost:3000/storage";
+  const secret = getLocalStorageSecret();
+
+  const buildSignedUrl = (key: string) => {
+    const url = new URL(baseUrl);
+    const expires =
+      Math.floor(Date.now() / 1000) + LOCAL_URL_EXPIRATION_SECONDS;
+    url.searchParams.set("key", key);
+    url.searchParams.set("expires", expires.toString());
+    url.searchParams.set("signature", generateLocalSignature(key, expires, secret));
+
+    return url.toString();
+  };
 
   return {
     async getSignedUploadUrl({ key }) {
-      const url = new URL(baseUrl);
-      url.searchParams.set("key", key);
-
-      return { url: url.toString() };
+      return { url: buildSignedUrl(key) };
     },
     async getSignedDownloadUrl({ key }) {
-      const url = new URL(baseUrl);
-      url.searchParams.set("key", key);
-
-      return { url: url.toString() };
+      return { url: buildSignedUrl(key) };
     },
   } satisfies StorageProvider;
 }
@@ -105,20 +116,23 @@ export function getStorageProvider(): StorageProvider {
     return cachedProvider;
   }
 
-  if (process.env.STORAGE_DRIVER === "local") {
+  const driver = process.env.STORAGE_DRIVER ?? "s3";
+
+  if (driver === "local") {
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error(
+        "O driver de storage local só pode ser utilizado em ambiente de desenvolvimento."
+      );
+    }
+
     cachedProvider = createLocalProvider();
     return cachedProvider;
   }
 
-  try {
-    cachedProvider = createS3Provider();
-    return cachedProvider;
-  } catch (error) {
-    console.warn(
-      "Falha ao configurar S3, utilizando driver local para desenvolvimento",
-      error
-    );
-    cachedProvider = createLocalProvider();
-    return cachedProvider;
+  if (driver !== "s3") {
+    throw new Error(`Driver de storage inválido: ${driver}`);
   }
+
+  cachedProvider = createS3Provider();
+  return cachedProvider;
 }
