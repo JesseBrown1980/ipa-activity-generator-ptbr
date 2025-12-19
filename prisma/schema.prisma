@@ -44,6 +44,8 @@ model Membership {
 
   organization Organization @relation(fields: [orgId], references: [id])
   user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([orgId, userId])
 }
 
 model Student {
@@ -69,8 +71,8 @@ model Consent {
   signedAt            DateTime
   signedByUserId      String
 
-  student  Student @relation(fields: [studentId], references: [id])
-  signedBy User    @relation("ConsentSigner", fields: [signedByUserId], references: [id])
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  signedBy User    @relation("ConsentSigner", fields: [signedByUserId], references: [id], onDelete: Restrict)
 }
 
 model Plan {
@@ -98,6 +100,8 @@ model Recording {
   createdAt       DateTime @default(now())
 
   organization Organization @relation(fields: [orgId], references: [id])
-  student      Student      @relation(fields: [studentId], references: [id])
-  createdBy    User         @relation("RecordingAuthor", fields: [createdByUserId], references: [id])
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("RecordingAuthor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, createdAt])
 }
