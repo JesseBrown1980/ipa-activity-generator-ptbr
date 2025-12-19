@@ -31,7 +31,20 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const data = uploadSchema.parse(body);
+    const parsed = uploadSchema.safeParse(body);
+
+    if (!parsed.success) {
+      const message = parsed.error.issues[0]?.message ?? "Dados inválidos.";
+      const status = parsed.error.issues.some((issue) =>
+        issue.path.includes("mimeType")
+      )
+        ? 415
+        : 400;
+
+      return NextResponse.json({ error: message }, { status });
+    }
+
+    const data = parsed.data;
 
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, orgId: session.user.orgId },
