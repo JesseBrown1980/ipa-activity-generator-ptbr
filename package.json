@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "node scripts/lint-stub.js",
     "test": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-e2e.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"

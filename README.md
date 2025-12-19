@@ -15,7 +15,8 @@ Aplicação para gerar atividades em Alfabeto Fonético Internacional (AFI/IPA) 
 ### Testes
 - Unitários: `npm run test` (Vitest, inclui validação de esquemas e helpers)
 - E2E opcional: `npm run test:e2e` (Playwright, habilite com `E2E_RUN=true` e
-  um backend disponível)
+  um backend disponível). No CI, esse flag precisa estar setado para que o
+  passo de E2E execute; caso contrário, ele será pulado.
 
 ## Variáveis de ambiente
 
