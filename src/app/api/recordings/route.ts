@@ -6,7 +6,11 @@ import { Role } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
-import { ALLOWED_AUDIO_MIME_TYPES } from "@/lib/upload-validation";
+import {
+  ALLOWED_AUDIO_MIME_TYPES,
+  extensionFromMimeType,
+  isAllowedAudioMimeType,
+} from "@/lib/upload-validation";
 
 const recordingCreateSchema = z.object({
   storageKey: z.string().min(1),
@@ -105,7 +109,41 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const data = recordingCreateSchema.parse(body);
+    const parsed = recordingCreateSchema.safeParse(body);
+
+    if (!parsed.success) {
+      const message = parsed.error.issues[0]?.message ?? "Dados inválidos.";
+      const status = parsed.error.issues.some((issue) =>
+        issue.path.includes("mimeType")
+      )
+        ? 415
+        : 400;
+
+      return NextResponse.json({ error: message }, { status });
+    }
+
+    const data = parsed.data;
+
+    if (!isAllowedAudioMimeType(data.mimeType)) {
+      return NextResponse.json(
+        { error: "Tipo de arquivo não suportado." },
+        { status: 415 }
+      );
+    }
+
+    const expectedPrefix = `org/${session.user.orgId}/students/${data.studentId}/recordings/`;
+    const expectedExtension = extensionFromMimeType(data.mimeType);
+    const hasValidPrefix = data.storageKey.startsWith(expectedPrefix);
+    const hasValidExtension = data.storageKey
+      .toLowerCase()
+      .endsWith(`.${expectedExtension}`);
+
+    if (!hasValidPrefix || !hasValidExtension) {
+      return NextResponse.json(
+        { error: "Chave ou extensão incompatível com o tipo de arquivo." },
+        { status: 415 }
+      );
+    }
 
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, orgId: session.user.orgId },
