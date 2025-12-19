@@ -26,6 +26,17 @@ describe("requireRole", () => {
     );
   });
 
+  it("lança erro quando o usuário não tem role definida", () => {
+    const sessionWithoutRole: Session = {
+      ...baseSession,
+      user: { ...baseSession.user, role: null },
+    } as Session;
+
+    expect(() => requireRole(sessionWithoutRole, [Role.ADMIN])).toThrow(
+      "Usuário sem sessão ativa."
+    );
+  });
+
   it("bloqueia perfis sem permissão", () => {
     const teacherSession: Session = {
       ...baseSession,
