@@ -62,7 +62,14 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
 
-  requireRole(session, [Role.ADMIN]);
+  try {
+    requireRole(session, [Role.ADMIN]);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Acesso negado para este perfil.";
+
+    return NextResponse.json({ error: message }, { status: 403 });
+  }
 
   try {
     const body = await request.json();
@@ -112,7 +119,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
 
-  requireRole(session, [Role.ADMIN]);
+  try {
+    requireRole(session, [Role.ADMIN]);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Acesso negado para este perfil.";
+
+    return NextResponse.json({ error: message }, { status: 403 });
+  }
 
   try {
     const body = await request.json();
